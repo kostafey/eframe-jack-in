@@ -1,0 +1,12 @@
+[package]
+name = "eframe-jack-in"
+version = "0.1.0"
+authors = ["kostafey <kostafey@gmail.com>"]
+
+[dependencies]
+systray = { git = "https://github.com/qdot/systray-rs" }
+inputbot = "0.4.0"
+winapi = "0.2.0"
+user32-sys = "0.2.0"
+kernel32-sys = "0.2.0"
+
