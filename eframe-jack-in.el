@@ -51,11 +51,13 @@ you can skip some buffers.")
              (frame-list)))
 
   (setq eframe-mk t)
+  (setq eframe-buffer-list-updated-p t)
 
   (defun eframe-window-configuration-change ()
     (when (and (string= (buffer-file-name)
                         (expand-file-name eframe-touch-file))
                (not eframe-force-switch))
+      (setq eframe-buffer-list-updated-p t)
       (cond ((and (or (= (length (eframe-icon-frame-list))
                          (length (frame-list)))
                       (= (length (eframe-icon-frame-list))
@@ -70,7 +72,37 @@ you can skip some buffers.")
                (eframe-back-from-touch)
                (setq eframe-mk t))))))
 
+  (setq-local eframe-point 0)
+  (setq-local eframe-window-start 0)
+
+  (defun eframe-reset-point ()
+    (setq eframe-point (point))
+    (setq eframe-window-start (window-start)))
+
+  (add-hook 'focus-out-hook
+            'eframe-reset-point)
+
+  (defun eframe-buffer-list-update ()
+    (when (and eframe-buffer-list-updated-p
+               (string= (buffer-file-name (other-buffer))
+                        (expand-file-name eframe-touch-file))
+               (not eframe-force-switch)
+               (not (> (length (eframe-icon-frame-list)) 1))
+               (boundp 'eframe-point))
+      (setq eframe-buffer-list-updated-p nil)
+      (goto-char eframe-point)
+      (set-window-start (selected-window) eframe-window-start)))
+
+  (add-hook 'buffer-list-update-hook
+            'eframe-buffer-list-update)
+
   (add-hook 'window-configuration-change-hook
             'eframe-window-configuration-change))
+
+(defun eframe-pop-emacs ()
+  (interactive)
+  (previous-multiframe-window)
+  (when (fboundp 'eframe-reset-point)
+    (eframe-reset-point)))
 
 (provide 'eframe-jack-in)
