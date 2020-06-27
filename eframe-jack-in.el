@@ -72,8 +72,8 @@ you can skip some buffers.")
                (eframe-back-from-touch)
                (setq eframe-mk t))))))
 
-  (setq-local eframe-point 0)
-  (setq-local eframe-window-start 0)
+  (defvar-local eframe-point (point))
+  (defvar-local eframe-window-start (window-start))
 
   (defun eframe-reset-point ()
     (setq eframe-point (point))
