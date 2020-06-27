@@ -82,6 +82,11 @@ you can skip some buffers.")
   (add-hook 'focus-out-hook
             'eframe-reset-point)
 
+  (defadvice iconify-or-deiconify-frame
+      (around eframe-iconify-or-deiconify-frame activate)
+    (eframe-reset-point)
+    ad-do-it)
+
   (defun eframe-buffer-list-update ()
     (when (and eframe-buffer-list-updated-p
                (string= (buffer-file-name (other-buffer))
