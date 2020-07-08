@@ -48,6 +48,23 @@ you can skip some buffers.")
     (previous-buffer))
   (setq eframe-force-switch nil))
 
+(defun eframe-pop-buffer (mode)
+  "Find first buffer with MODE major-mode and set focus or display it."
+  (let ((result-buffer nil))
+    (dolist (buff (buffer-list))
+      (with-current-buffer buff
+        (when (eq major-mode mode)
+          (setq result-buffer buff)
+          (return))))
+    (when result-buffer
+      (let ((win (get-buffer-window result-buffer t)))
+        (if win
+            (progn
+              (select-frame-set-input-focus (window-frame win))
+              (set-frame-selected-window (window-frame win) win))
+          (pop-to-buffer result-buffer))))
+    result-buffer))
+
 (when (eq system-type 'windows-nt)
 
   (defcustom eframe-touch-file "~/.emacs.d/touch"
