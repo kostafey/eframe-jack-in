@@ -55,7 +55,7 @@ you can skip some buffers.")
       (with-current-buffer buff
         (when (eq major-mode mode)
           (setq result-buffer buff)
-          (return))))
+          (cl-return))))
     (when result-buffer
       (let ((win (get-buffer-window result-buffer t)))
         (if win
