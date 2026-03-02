@@ -8,7 +8,7 @@ use std::process::Command;
 use std::thread;
 
 fn rase_emacs_frame() {
-    let binpath = "C:/Emacs/bin";
+    let binpath = "C:/Program Files/Emacs/emacs-30.2/bin/";
     let touchpath = "~/.emacs.d/touch";
 
     Command::new(&format!("{}/emacsclientw.exe", binpath))
@@ -29,10 +29,12 @@ fn main() {
     app.set_icon_from_file(&"emacs.ico".to_string(),).ok();
     app.add_menu_item(&"Raise Emacs frame".to_string(), |_| {
         rase_emacs_frame();
+        Ok::<_, systray::Error>(())
     }).ok();
     app.add_menu_separator().ok();
     app.add_menu_item(&"Quit".to_string(), |window| {
         window.quit();
+        Ok::<_, systray::Error>(())
     }).ok();
 
     thread::spawn(move || {
