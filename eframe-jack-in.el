@@ -1,5 +1,9 @@
 ;;; eframe-jack-in.el --- Get Emacs frame focus for Windows.
 
+;; Optional integration with hopper.el (see `eframe-kill-buffer').
+(defvar hop-arrived-via-hop)
+(declare-function hop-backward "hopper")
+
 (defcustom eframe-omit-buffers-patterns (list)
   "List of buffer name patterns should be skiped.
 Any time `eframe-next-buffer' or `eframe-previous-buffer' is called
@@ -39,13 +43,21 @@ you can skip some buffers.")
       (previous-buffer)))
 
 (defun eframe-kill-buffer ()
-  "Kill current buffer."
+  "Kill current buffer.
+If the buffer was entered via `hop-at-point' (see hopper.el), return to
+the previous position with `hop-backward' after killing it instead of
+switching to the previous buffer."
   (interactive)
   (setq eframe-force-switch t)
-  (kill-buffer (current-buffer))
-  (previous-buffer)
-  (when (eframe-omit-buffer-p)
-    (previous-buffer))
+  (if (and (bound-and-true-p hop-arrived-via-hop)
+           (fboundp 'hop-backward))
+      (progn
+        (kill-buffer (current-buffer))
+        (hop-backward))
+    (kill-buffer (current-buffer))
+    (previous-buffer)
+    (when (eframe-omit-buffer-p)
+      (previous-buffer)))
   (setq eframe-force-switch nil))
 
 (defun eframe-pop-buffer (mode)
