@@ -37,7 +37,13 @@ launch = '''%ProgramFiles%\muCommander\muCommander.exe'''
 [[target]]
 name = "PowerShell"
 hotkey = "Ctrl+Alt+Q"
-match = { exe = "WindowsTerminal.exe", title = "(?i)powershell|pwsh" }
+# Match by exe only, not title — the WT window title reflects the active
+# tab name, so renaming a tab breaks a title predicate and Ctrl+Alt+Q ends
+# up spawning a second wt.exe instead of activating the existing one.
+# Trade-off: if multiple WT windows are open, the hotkey cycles between
+# them regardless of what shell each one hosts. Which tabs live inside a
+# WT window isn't exposed via Win32 API.
+match = { exe = "WindowsTerminal.exe" }
 launch = "wt.exe -p \"Windows PowerShell\""
 
 [[target]]
@@ -51,3 +57,23 @@ name = "Slack"
 hotkey = "Ctrl+Alt+S"
 match = { exe = "slack.exe", class = "Chrome_WidgetWin_1" }
 launch = '''%LOCALAPPDATA%\slack\slack.exe'''
+
+[[target]]
+name = "IntelliJ IDEA"
+hotkey = "Ctrl+Alt+I"
+# IntelliJ (like other JetBrains IDEs) is a Swing app → class SunAwtFrame,
+# same as muCommander. Disambiguate by exe. `idea64.exe` is the 64-bit
+# launcher; older installs may use `idea.exe`. Toolbox installs live under
+# %LOCALAPPDATA%\Programs\IntelliJ IDEA Ultimate\bin\idea64.exe — if App
+# Paths doesn't find it, replace with the absolute path.
+match = { exe = "idea64.exe", class = "SunAwtFrame" }
+launch = "idea64.exe"
+
+[[target]]
+name = "VS Code"
+hotkey = "Ctrl+Alt+V"
+# VS Code is Electron → same Chrome_WidgetWin_1 as Chrome/Edge/Slack.
+# Disambiguate by exe. Standard installer registers Code.exe in App Paths;
+# user-scope install typically lives at %LOCALAPPDATA%\Programs\Microsoft VS Code\Code.exe.
+match = { exe = "Code.exe", class = "Chrome_WidgetWin_1" }
+launch = "Code.exe"
