@@ -1,0 +1,53 @@
+# eframe-jack-in default configuration.
+#
+# Each [[target]] binds a global hotkey to an application. When pressed:
+#   - the tray program looks for a top-level window matching `match` and
+#     brings it to the foreground (cycling through hits on repeat press);
+#   - if no matching window exists, the `launch` command is spawned;
+#   - for Emacs specifically, `always_launch_if_no_window = true` also fires
+#     the launch when a matched frame is present but obscured — emacsclient
+#     is idempotent and cheap to call.
+#
+# `match` predicates combine conjunctively (AND). Any field may be omitted.
+# The `class` / `exe` fields below are educated guesses — verify on your
+# machine with `eframe-jack-in.exe --list-windows`.
+#
+# Environment variables (%EMACS%, %LOCALAPPDATA%, %ProgramFiles%, ~) are
+# expanded inside string values.
+
+[[target]]
+name = "Emacs"
+hotkey = "Ctrl+Alt+E"
+match = { class = "Emacs" }
+launch = '''"%EMACS%\bin\emacsclientw.exe" --no-wait --alternate-editor="%EMACS%\bin\runemacs.exe" "~\.emacs.d\touch"'''
+always_launch_if_no_window = true
+
+[[target]]
+name = "Google Chrome"
+hotkey = "Ctrl+Alt+W"
+match = { exe = "chrome.exe", class = "Chrome_WidgetWin_1" }
+launch = "chrome.exe"
+
+[[target]]
+name = "muCommander"
+hotkey = "Ctrl+Alt+M"
+match = { class = "SunAwtFrame", title = "(?i)mucommander" }
+launch = '''%ProgramFiles%\muCommander\muCommander.exe'''
+
+[[target]]
+name = "PowerShell"
+hotkey = "Ctrl+Alt+Q"
+match = { exe = "WindowsTerminal.exe", title = "(?i)powershell|pwsh" }
+launch = "wt.exe -p \"Windows PowerShell\""
+
+[[target]]
+name = "Microsoft Edge"
+hotkey = "Ctrl+Alt+D"
+match = { exe = "msedge.exe", class = "Chrome_WidgetWin_1" }
+launch = "msedge.exe"
+
+[[target]]
+name = "Slack"
+hotkey = "Ctrl+Alt+S"
+match = { exe = "slack.exe", class = "Chrome_WidgetWin_1" }
+launch = '''%LOCALAPPDATA%\slack\slack.exe'''

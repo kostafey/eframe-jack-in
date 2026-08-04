@@ -34,12 +34,40 @@ Add hotkey to `eframe-jack-in\linux\switch-to-emacsclient`.
 
 **Windows**
 
-Actually, you can create a shortcut to
-`eframe-jack-in\windows\switch-to-emacsclient.bat` and add hotkey to it,
-but sometimes the response of this call can take many seconds.
-To make it quick you shold run tiny `eframe-jack-in.exe` trayer program.
+The quickest fallback is a shortcut to
+`eframe-jack-in\windows\switch-to-emacsclient.bat` with a hotkey attached
+to it. Cold-start latency can reach several seconds, though.
 
-*chocolately note*
+For a faster, more capable path, run `eframe-jack-in.exe` (a small tray
+program in `windows/eframe/`) — see `windows/eframe/README-usage` /
+`TASK-eframe-jack-in.md` for the design. It:
+
+- Binds one **global hotkey per target application**, not just Emacs. Chrome,
+  Edge, Slack, muCommander, Windows Terminal — each gets its own hotkey. The
+  default hotkey for Emacs is `Ctrl+Alt+E`.
+- Uses `RegisterHotKey` so the hotkey combination is consumed by the system
+  (no leaked keystrokes into the active app) and the tray process is
+  allowed to change the foreground window.
+- Finds and activates the target window itself (instead of delegating to
+  `emacsclientw`), cycling through multiple hits on repeat press.
+
+Configuration lives in `%APPDATA%\eframe-jack-in\config.toml` (materialised
+on first run). Diagnostic flags:
+
+```
+eframe-jack-in.exe --list-windows   # dump HWND / class / exe / title table
+eframe-jack-in.exe --check-config   # validate hotkeys + launch paths
+eframe-jack-in.exe --config PATH    # use a specific config file
+```
+
+Build it with `cargo build --release` in `windows/eframe/`.
+
+Note on elevation: if the target window belongs to an elevated process and
+the tray program does not, Windows UIPI will block foreground changes and
+`RegisterHotKey` won't fire over an elevated foreground. Run the tray
+elevated only if you need to control elevated apps.
+
+Elisp-side buffer filter (unchanged):
 
 ```lisp
 (setq eframe-omit-buffers-patterns (list "*nrepl-messages"))
