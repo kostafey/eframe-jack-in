@@ -15,7 +15,7 @@ use windows_sys::Win32::UI::WindowsAndMessaging::{
     AllowSetForegroundWindow, BringWindowToTop, EnumWindows, GetClassNameW, GetForegroundWindow,
     GetWindow, GetWindowLongPtrW, GetWindowTextLengthW, GetWindowTextW, GetWindowThreadProcessId,
     IsIconic, IsWindowVisible, SetForegroundWindow, ShowWindow, ASFW_ANY, GWL_EXSTYLE, GW_OWNER,
-    SW_RESTORE, SW_SHOW, WS_EX_TOOLWINDOW,
+    SW_MINIMIZE, SW_RESTORE, SW_SHOW, WS_EX_TOOLWINDOW,
 };
 
 use crate::config::Matcher;
@@ -191,6 +191,33 @@ pub fn pick_next(hits: &[isize], last: Option<isize>) -> isize {
 pub fn allow_next_foreground_any() {
     unsafe {
         AllowSetForegroundWindow(ASFW_ANY);
+    }
+}
+
+/// Minimize whatever window has the foreground right now. Returns the class
+/// name of the affected window (or None if we deliberately skipped it —
+/// desktop / taskbar / no foreground). Called by the "minimize-foreground"
+/// action.
+pub fn minimize_foreground() -> Option<String> {
+    unsafe {
+        let hwnd = GetForegroundWindow();
+        if hwnd.is_null() {
+            return None;
+        }
+        let mut buf = [0u16; 128];
+        let n = GetClassNameW(hwnd, buf.as_mut_ptr(), buf.len() as i32);
+        let class = if n > 0 {
+            String::from_utf16_lossy(&buf[..n as usize])
+        } else {
+            String::new()
+        };
+        // Skip shell windows — minimizing the desktop or the taskbar is
+        // never what the user wants.
+        if matches!(class.as_str(), "Progman" | "Shell_TrayWnd" | "WorkerW") {
+            return None;
+        }
+        ShowWindow(hwnd, SW_MINIMIZE);
+        Some(class)
     }
 }
 

@@ -24,6 +24,11 @@ pub struct RawTarget {
     pub launch: Option<String>,
     #[serde(default)]
     pub always_launch_if_no_window: bool,
+    /// Optional action override. Absent / "activate" (default) = find and raise
+    /// the matched window, launch when no match. "minimize-foreground" =
+    /// minimize whatever window has focus right now (`match` / `launch` ignored).
+    #[serde(default)]
+    pub action: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -50,6 +55,15 @@ pub struct Target {
     pub launch: Option<String>,
     pub always_launch_if_no_window: bool,
     pub last_hwnd: Option<isize>,
+    pub action: Action,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Action {
+    /// Find matching window and bring to foreground; launch if none.
+    Activate,
+    /// Minimize the current foreground window; ignores `match` / `launch`.
+    MinimizeForeground,
 }
 
 pub struct Matcher {
@@ -228,7 +242,17 @@ pub fn parse_config(text: &str, _source_path: Option<PathBuf>) -> Result<Config,
         seen_hotkeys.push((hotkey.modifiers, hotkey.vk, rt.name.clone()));
 
         let matcher = compile_matcher(rt.matcher, &rt.name)?;
-        if matcher.is_empty() && rt.launch.is_none() {
+        let action = match rt.action.as_deref() {
+            None | Some("activate") => Action::Activate,
+            Some("minimize-foreground") => Action::MinimizeForeground,
+            Some(other) => {
+                return Err(format!(
+                    "target \"{}\": unknown action \"{}\" (valid: \"activate\", \"minimize-foreground\")",
+                    rt.name, other
+                ));
+            }
+        };
+        if action == Action::Activate && matcher.is_empty() && rt.launch.is_none() {
             return Err(format!(
                 "target \"{}\": needs either a match predicate or a launch command",
                 rt.name
@@ -241,6 +265,7 @@ pub fn parse_config(text: &str, _source_path: Option<PathBuf>) -> Result<Config,
             launch: rt.launch,
             always_launch_if_no_window: rt.always_launch_if_no_window,
             last_hwnd: None,
+            action,
         });
     }
     Ok(Config { targets })

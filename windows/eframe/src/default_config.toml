@@ -77,3 +77,11 @@ hotkey = "Ctrl+Alt+V"
 # user-scope install typically lives at %LOCALAPPDATA%\Programs\Microsoft VS Code\Code.exe.
 match = { exe = "Code.exe", class = "Chrome_WidgetWin_1" }
 launch = "Code.exe"
+
+[[target]]
+name = "Minimize"
+hotkey = "Alt+Z"
+# Special action — minimize whatever window has focus right now. Ignores
+# `match` and `launch`. Shell surfaces (desktop / taskbar) are skipped so
+# the desktop can't accidentally be minimized when nothing else has focus.
+action = "minimize-foreground"

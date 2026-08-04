@@ -139,6 +139,15 @@ fn run_check_config(override_path: Option<PathBuf>) -> ExitCode {
     let windows = window::enumerate_windows();
     let mut problems = 0;
     for t in &cfg.targets {
+        if t.action != config::Action::Activate {
+            // Actions other than "activate" don't consult match / launch.
+            let action_name = match t.action {
+                config::Action::MinimizeForeground => "minimize-foreground",
+                config::Action::Activate => unreachable!(),
+            };
+            println!("  {:<24}  hotkey={}  action={}", t.name, t.hotkey.display, action_name);
+            continue;
+        }
         let hits = window::match_windows(&t.matcher, &windows);
         print!(
             "  {:<24}  hotkey={}  windows_found={}",

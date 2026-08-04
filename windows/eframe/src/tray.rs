@@ -243,6 +243,26 @@ impl App {
     }
 
     fn activate_target(&mut self, idx: usize) {
+        // Dispatch on the target's action. Non-activate actions ignore
+        // match/launch entirely.
+        match self.config.targets[idx].action {
+            crate::config::Action::Activate => self.do_activate(idx),
+            crate::config::Action::MinimizeForeground => self.do_minimize_foreground(idx),
+        }
+    }
+
+    fn do_minimize_foreground(&self, idx: usize) {
+        let name = self.config.targets[idx].name.clone();
+        match window::minimize_foreground() {
+            Some(class) => util::log(&format!("\"{}\": minimized window (class={})", name, class)),
+            None => util::log(&format!(
+                "\"{}\": nothing to minimize (no foreground / shell window)",
+                name
+            )),
+        }
+    }
+
+    fn do_activate(&mut self, idx: usize) {
         let windows = window::enumerate_windows();
         // Split-borrow: hits computation and last_hwnd update happen in the
         // same &mut Self reference below.
