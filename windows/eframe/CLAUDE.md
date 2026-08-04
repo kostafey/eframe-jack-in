@@ -150,6 +150,13 @@ After signing, retry `.\target\release\eframe-jack-in.exe --help`. If it
 still blocks, only remaining path is an IT ticket with the SHA256 the script
 prints at the end.
 
+**Signature is bound to the exact exe bytes** — every `cargo build`
+invalidates it, so `tools\sign.ps1` must be re-run after each rebuild.
+Before rebuilding, kill the running tray (`Get-Process eframe-jack-in |
+Stop-Process -Force`, or `Quit` from the tray menu) — Windows locks the
+exe file while the process is alive and `cargo build` fails with
+`Access is denied` otherwise.
+
 Two smaller changes are also in place unconditionally, because they cheaply
 reduce heuristic score:
 
