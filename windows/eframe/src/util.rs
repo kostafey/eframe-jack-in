@@ -228,31 +228,30 @@ pub fn spawn_detached(command: &str) -> Result<(), String> {
     let (program, _args) =
         split_command(command).ok_or_else(|| "empty launch command".to_string())?;
     let program = expand_env(&program);
-    let resolved = resolve_exe(&program).unwrap_or(program);
+    let resolved = resolve_exe(&program).unwrap_or_else(|| program.clone());
 
-    // Rebuild the command line with the resolved program path so CreateProcessW
-    // knows what to launch even when the caller only gave a bare name.
-    let rest_start = command.find(char::is_whitespace).unwrap_or(command.len());
-    let rest = &command[rest_start..];
-    let full_line = if resolved.contains(' ') {
-        format!("\"{}\"{}", resolved, rest)
-    } else {
-        format!("{}{}", resolved, rest)
-    };
-
-    let mut cmdline = wide(&full_line);
+    // Pass BOTH lpApplicationName (the exe path we resolved) and lpCommandLine
+    // (the caller's original string, unchanged) to CreateProcessW. That way:
+    //  - the actual exe launched is `resolved` (handles bare names via App Paths,
+    //    handles paths with spaces without needing us to add quoting);
+    //  - argv of the child process comes from `command` intact, so quoted args
+    //    like --alternate-editor="C:\Program Files\..." arrive as one token.
+    // Attempting to splice the two by hand (as an earlier version did) breaks
+    // whenever the exe path contains a space — .find(is_whitespace) hits the
+    // space inside "C:\Program Files\" and shreds the rest of the line.
+    let app_name = wide(&resolved);
+    let mut cmdline = wide(command);
     let mut si: STARTUPINFOW = unsafe { std::mem::zeroed() };
     si.cb = std::mem::size_of::<STARTUPINFOW>() as u32;
     let mut pi: PROCESS_INFORMATION = unsafe { std::mem::zeroed() };
     let ok = unsafe {
         CreateProcessW(
-            std::ptr::null(),
+            app_name.as_ptr(),
             cmdline.as_mut_ptr(),
             std::ptr::null(),
             std::ptr::null(),
             0, // do not inherit handles
             0, // no DETACHED_PROCESS / CREATE_NO_WINDOW — those are EDR-heuristic triggers
-
             std::ptr::null(),
             std::ptr::null(),
             &si,
@@ -267,8 +266,8 @@ pub fn spawn_detached(command: &str) -> Result<(), String> {
             String::new()
         };
         return Err(format!(
-            "CreateProcessW failed (err={}){}\ncommand: {}",
-            err, hint, full_line
+            "CreateProcessW failed (err={}){}\nresolved exe: {}\ncommand: {}",
+            err, hint, resolved, command
         ));
     }
     unsafe {
