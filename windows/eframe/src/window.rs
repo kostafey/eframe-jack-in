@@ -10,12 +10,15 @@ use windows_sys::Win32::System::Threading::{
     AttachThreadInput, GetCurrentThreadId, OpenProcess, QueryFullProcessImageNameW,
     PROCESS_QUERY_LIMITED_INFORMATION,
 };
-use windows_sys::Win32::UI::Input::KeyboardAndMouse::SetFocus;
+use windows_sys::Win32::UI::Input::KeyboardAndMouse::{
+    GetKeyboardLayout, GetKeyboardLayoutList, SetFocus, HKL,
+};
 use windows_sys::Win32::UI::WindowsAndMessaging::{
     AllowSetForegroundWindow, BringWindowToTop, EnumWindows, GetClassNameW, GetForegroundWindow,
     GetWindow, GetWindowLongPtrW, GetWindowTextLengthW, GetWindowTextW, GetWindowThreadProcessId,
-    IsIconic, IsWindowVisible, SetForegroundWindow, ShowWindow, ASFW_ANY, GWL_EXSTYLE, GW_OWNER,
-    SW_MINIMIZE, SW_RESTORE, SW_SHOW, WS_EX_TOOLWINDOW,
+    IsIconic, IsWindowVisible, PostMessageW, SetForegroundWindow, ShowWindow, ASFW_ANY,
+    GWL_EXSTYLE, GW_OWNER, SW_MINIMIZE, SW_RESTORE, SW_SHOW, WM_INPUTLANGCHANGEREQUEST,
+    WS_EX_TOOLWINDOW,
 };
 
 use crate::config::Matcher;
@@ -191,6 +194,48 @@ pub fn pick_next(hits: &[isize], last: Option<isize>) -> isize {
 pub fn allow_next_foreground_any() {
     unsafe {
         AllowSetForegroundWindow(ASFW_ANY);
+    }
+}
+
+/// Cycle the foreground window's input language to the next installed
+/// keyboard layout. Returns a "0xOLD -> 0xNEW" diagnostic string, or None
+/// if there's no foreground / only one layout / API failure.
+///
+/// Uses PostMessageW(WM_INPUTLANGCHANGEREQUEST) so the target app receives
+/// the change through the same code path Windows itself uses for the
+/// system Alt+Shift hotkey — apps that track layout changes (Emacs, IDEs,
+/// browsers) all pick it up.
+pub fn switch_keyboard_layout() -> Option<String> {
+    unsafe {
+        let hwnd = GetForegroundWindow();
+        if hwnd.is_null() {
+            return None;
+        }
+        let tid = GetWindowThreadProcessId(hwnd, std::ptr::null_mut());
+        if tid == 0 {
+            return None;
+        }
+        let current: HKL = GetKeyboardLayout(tid);
+
+        let count = GetKeyboardLayoutList(0, std::ptr::null_mut());
+        if count <= 1 {
+            return None; // nothing to cycle to
+        }
+        let mut layouts: Vec<HKL> = vec![std::ptr::null_mut(); count as usize];
+        let got = GetKeyboardLayoutList(count, layouts.as_mut_ptr());
+        if got <= 0 {
+            return None;
+        }
+        layouts.truncate(got as usize);
+
+        let next = if let Some(pos) = layouts.iter().position(|&h| h == current) {
+            layouts[(pos + 1) % layouts.len()]
+        } else {
+            layouts[0]
+        };
+
+        PostMessageW(hwnd, WM_INPUTLANGCHANGEREQUEST, 0, next as isize);
+        Some(format!("0x{:X} -> 0x{:X}", current as usize, next as usize))
     }
 }
 

@@ -143,6 +143,7 @@ fn run_check_config(override_path: Option<PathBuf>) -> ExitCode {
             // Actions other than "activate" don't consult match / launch.
             let action_name = match t.action {
                 config::Action::MinimizeForeground => "minimize-foreground",
+                config::Action::SwitchKeyboardLayout => "switch-keyboard-layout",
                 config::Action::Activate => unreachable!(),
             };
             println!("  {:<24}  hotkey={}  action={}", t.name, t.hotkey.display, action_name);

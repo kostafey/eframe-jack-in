@@ -85,3 +85,19 @@ hotkey = "Alt+Z"
 # `match` and `launch`. Shell surfaces (desktop / taskbar) are skipped so
 # the desktop can't accidentally be minimized when nothing else has focus.
 action = "minimize-foreground"
+
+[[target]]
+name = "Switch keyboard layout"
+hotkey = "Alt+CapsLock"
+# Cycle the foreground window's input language to the next installed
+# keyboard layout. Uses PostMessage(WM_INPUTLANGCHANGEREQUEST) — same
+# mechanism Windows itself uses for the built-in Alt+Shift.
+#
+# If you want this to fully replace the system-native Alt+Shift, disable
+# the latter through: Settings → Time & language → Language → Typing →
+# Advanced keyboard settings → Input language hot keys → "Not Assigned".
+# Or via registry:
+#   Set-ItemProperty "HKCU:\Keyboard Layout\Toggle" -Name Hotkey -Value 3 -Type String
+#   Set-ItemProperty "HKCU:\Keyboard Layout\Toggle" -Name "Language Hotkey" -Value 3 -Type String
+# (relog after).
+action = "switch-keyboard-layout"

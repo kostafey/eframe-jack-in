@@ -248,6 +248,7 @@ impl App {
         match self.config.targets[idx].action {
             crate::config::Action::Activate => self.do_activate(idx),
             crate::config::Action::MinimizeForeground => self.do_minimize_foreground(idx),
+            crate::config::Action::SwitchKeyboardLayout => self.do_switch_keyboard_layout(idx),
         }
     }
 
@@ -257,6 +258,17 @@ impl App {
             Some(class) => util::log(&format!("\"{}\": minimized window (class={})", name, class)),
             None => util::log(&format!(
                 "\"{}\": nothing to minimize (no foreground / shell window)",
+                name
+            )),
+        }
+    }
+
+    fn do_switch_keyboard_layout(&self, idx: usize) {
+        let name = self.config.targets[idx].name.clone();
+        match window::switch_keyboard_layout() {
+            Some(diag) => util::log(&format!("\"{}\": layout switched {}", name, diag)),
+            None => util::log(&format!(
+                "\"{}\": layout switch skipped (no foreground / single layout / API fail)",
                 name
             )),
         }

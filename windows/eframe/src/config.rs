@@ -64,6 +64,9 @@ pub enum Action {
     Activate,
     /// Minimize the current foreground window; ignores `match` / `launch`.
     MinimizeForeground,
+    /// Cycle the foreground window's input language to the next installed
+    /// keyboard layout; ignores `match` / `launch`.
+    SwitchKeyboardLayout,
 }
 
 pub struct Matcher {
@@ -205,7 +208,11 @@ fn vk_for(key: &str) -> Option<u32> {
             }
         }
     }
-    None
+    // Named non-modifier keys. Add on demand — see MSDN Virtual-Key Codes.
+    match k.as_str() {
+        "CAPSLOCK" | "CAPS" => Some(0x14), // VK_CAPITAL
+        _ => None,
+    }
 }
 
 fn compile_matcher(raw: RawMatcher, _target_name: &str) -> Result<Matcher, String> {
@@ -245,9 +252,11 @@ pub fn parse_config(text: &str, _source_path: Option<PathBuf>) -> Result<Config,
         let action = match rt.action.as_deref() {
             None | Some("activate") => Action::Activate,
             Some("minimize-foreground") => Action::MinimizeForeground,
+            Some("switch-keyboard-layout") => Action::SwitchKeyboardLayout,
             Some(other) => {
                 return Err(format!(
-                    "target \"{}\": unknown action \"{}\" (valid: \"activate\", \"minimize-foreground\")",
+                    "target \"{}\": unknown action \"{}\" \
+                     (valid: \"activate\", \"minimize-foreground\", \"switch-keyboard-layout\")",
                     rt.name, other
                 ));
             }
