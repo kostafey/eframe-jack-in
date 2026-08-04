@@ -142,8 +142,12 @@ locally-generated code-signing cert whose public part is added to
 does this idempotently:
 
 ```powershell
-# From an elevated PowerShell:
-powershell -ExecutionPolicy Bypass -File tools\sign.ps1
+# From an elevated PowerShell. -Subject is a parameter; substitute your own
+# name/org. Use the SAME -Subject on every run — the script looks the cert
+# up by subject in Cert:\CurrentUser\My, so a different string creates a
+# second cert instead of reusing the first.
+powershell -ExecutionPolicy Bypass -File tools\sign.ps1 `
+    -Subject "CN=eframe-jack-in local dev, O=firstname.lastname"
 ```
 
 After signing, retry `.\target\release\eframe-jack-in.exe --help`. If it
