@@ -10,7 +10,7 @@ use std::process::ExitCode;
 
 use crate::config::{Config, ConfigOrigin};
 
-const SINGLETON_NAME: &str = "Global\\eframe-jack-in-singleton";
+const SINGLETON_NAME: &str = "Local\\eframe-jack-in-singleton";
 
 const USAGE: &str = "\
 eframe-jack-in — Windows tray helper that binds global hotkeys to app windows.

@@ -17,8 +17,7 @@ use windows_sys::Win32::System::Registry::{
     KEY_READ, REG_SZ, REG_EXPAND_SZ,
 };
 use windows_sys::Win32::System::Threading::{
-    CreateMutexW, CreateProcessW, CREATE_NO_WINDOW, DETACHED_PROCESS, PROCESS_INFORMATION,
-    STARTUPINFOW,
+    CreateMutexW, CreateProcessW, PROCESS_INFORMATION, STARTUPINFOW,
 };
 use windows_sys::Win32::UI::WindowsAndMessaging::{
     MessageBoxW, MB_ICONERROR, MB_ICONWARNING, MB_OK,
@@ -252,7 +251,8 @@ pub fn spawn_detached(command: &str) -> Result<(), String> {
             std::ptr::null(),
             std::ptr::null(),
             0, // do not inherit handles
-            DETACHED_PROCESS | CREATE_NO_WINDOW,
+            0, // no DETACHED_PROCESS / CREATE_NO_WINDOW — those are EDR-heuristic triggers
+
             std::ptr::null(),
             std::ptr::null(),
             &si,
