@@ -1,7 +1,7 @@
 ;;; eframe-windmove.el --- Handle 2 monitors case for windows navigation.
 
 (defun eframe-windmove-do-window-select (orig-fun &rest args)
-  (let ((other-window (apply 'windmove-find-other-window args)))
+  (let ((other-window (apply 'windmove-find-other-window (seq-take args 3))))
     (if (and (null other-window)
              (> (length (frame-list)) 1))
         (let ((direction (car args))
