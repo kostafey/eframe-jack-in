@@ -1,4 +1,6 @@
-;;; eframe-jack-in.el --- Get Emacs frame focus for Windows.
+;;; eframe-jack-in.el --- Get Emacs frame focus for Windows.  -*- lexical-binding: t; -*-
+
+(require 'cl-lib)
 
 ;; Optional integration with hopper.el (see `eframe-kill-buffer').
 (defvar hop-arrived-via-hop)
@@ -20,9 +22,8 @@ you can skip some buffers.")
 
 (defun eframe-omit-buffer-p ()
   (or (equal (buffer-name) eframe-touch-buffer-name)
-      (some 'identity
-            (mapcar (lambda (pattern) (cl-search pattern (buffer-name)))
-                    eframe-omit-buffers-patterns))))
+      (cl-some (lambda (pattern) (cl-search pattern (buffer-name)))
+               eframe-omit-buffers-patterns)))
 
 (defvar eframe-force-switch nil)
 
@@ -100,8 +101,8 @@ switching to the previous buffer."
     (-filter (lambda (f) (eq (cdr (assq 'visibility (frame-parameters f))) 'icon))
              (frame-list)))
 
-  (setq eframe-mk t)
-  (setq eframe-buffer-list-updated-p t)
+  (defvar eframe-mk t)
+  (defvar eframe-buffer-list-updated-p t)
 
   (defun eframe-window-configuration-change ()
     (when (and (eframe-touch-buffer-p)
