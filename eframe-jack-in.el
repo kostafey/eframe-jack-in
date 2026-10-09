@@ -16,9 +16,7 @@ you can skip some buffers.")
 
 (defun eframe-pop-emacs ()
   (interactive)
-  (previous-multiframe-window)
-  (when (fboundp 'eframe-reset-point)
-    (eframe-reset-point)))
+  (previous-multiframe-window))
 
 (defun eframe-omit-buffer-p ()
   (or (equal (buffer-name) eframe-touch-buffer-name)
@@ -102,12 +100,10 @@ switching to the previous buffer."
              (frame-list)))
 
   (defvar eframe-mk t)
-  (defvar eframe-buffer-list-updated-p t)
 
   (defun eframe-window-configuration-change ()
     (when (and (eframe-touch-buffer-p)
                (not eframe-force-switch))
-      (setq eframe-buffer-list-updated-p t)
       (cond ((and (or (= (length (eframe-icon-frame-list))
                          (length (frame-list)))
                       (= (length (eframe-icon-frame-list))
@@ -122,35 +118,8 @@ switching to the previous buffer."
                (eframe-back-from-touch)
                (setq eframe-mk t))))))
 
-  (defvar-local eframe-point (point))
-  (defvar-local eframe-window-start (window-start))
-
-  (defun eframe-reset-point ()
-    (setq-local eframe-point (point))
-    (setq-local eframe-window-start (window-start)))
-
-  (defun eframe-load-point ()
-    (goto-char eframe-point)
-    (set-window-start (selected-window) eframe-window-start))
-
-  (add-hook 'focus-out-hook
-            'eframe-reset-point)
-
-  (defadvice iconify-or-deiconify-frame
-      (around eframe-iconify-or-deiconify-frame activate)
-    (eframe-reset-point)
-    ad-do-it)
-
-  (defun eframe-buffer-list-update ()
-    (when (and eframe-buffer-list-updated-p
-               (not eframe-force-switch)
-               (not (> (length (eframe-icon-frame-list)) 1)))
-      (setq eframe-buffer-list-updated-p nil)
-      (eframe-load-point)))
-
-  (add-hook 'buffer-list-update-hook
-            'eframe-buffer-list-update)
-
+  ;; No point and window-start restoring on the way back from the touch
+  ;; buffer: `previous-buffer' brings both back from `window-prev-buffers'.
   (add-hook 'window-configuration-change-hook
             'eframe-window-configuration-change))
 
